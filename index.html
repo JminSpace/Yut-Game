@@ -39,7 +39,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold3);outline-
 .ag2 b{display:block;font:700 13.5px var(--f1);color:var(--fg)}
 .ag2.희귀{border-color:rgba(100,170,240,.8)}.ag2.전설{border-color:rgba(226,189,114,.95);box-shadow:0 0 12px rgba(226,189,114,.22)}
 .ag2.em{text-align:center;border-style:dashed;background:none;padding:8px}
-#bd{width:100%;max-width:max(340px,min(100%,calc(100vh - 150px)));margin:0 auto;box-sizing:border-box;padding:8px;border-radius:26px;background:linear-gradient(150deg,#4c6189,#243452);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 20px 34px rgba(8,14,28,.5),0 2px 0 #131c30}
+.cc{--bw:max(320px,min(100%,calc(100vh - 330px)))}
+#bd{width:100%;max-width:var(--bw);margin:0 auto;box-sizing:border-box;padding:8px;border-radius:26px;background:linear-gradient(150deg,#4c6189,#243452);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 20px 34px rgba(8,14,28,.5),0 2px 0 #131c30}
 svg{display:block;width:100%;height:auto}
 .tk path{fill:none;stroke-linecap:round;stroke-linejoin:round}
 .g1{stroke:#111a2c;stroke-width:21}.g2{stroke:#1d2a44;stroke-width:15}.gl{stroke:var(--gold);stroke-width:1.2;stroke-opacity:.5;stroke-dasharray:1 8}
@@ -112,7 +113,9 @@ button.chip:not(.sel){color:var(--fg);background:linear-gradient(180deg,#3d5481,
 .pw{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 14px;margin-top:16px;font-size:13px}.pwr{display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:10px;background:rgba(0,0,0,.2);opacity:.8}.pwr.ok{opacity:1}.pwr span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pwr b{font-weight:700;color:var(--mute)}.pwr.ok b{color:var(--gold3)}
 .asub.wt{margin:22px 0 4px;font-size:15px}
 .pkc{fill:rgba(226,189,114,.14);stroke:var(--gold);stroke-width:3;cursor:pointer;animation:pkp 1s ease-in-out infinite}@keyframes pkp{50%{fill:rgba(226,189,114,.34)}}
-#ab{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}#ab:empty{display:none}
+#ab{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:0}#ab:empty{display:none}#abw{padding:10px 12px}
+#tp{max-width:var(--bw);margin:12px auto 0;box-sizing:border-box;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:center}#tp .tl,#tp .tr{min-width:0}#tp .row{margin:8px 0 0}#tp .row button{flex:1 1 110px}#tp #res{min-height:34px;font-size:28px}
+@media(max-width:600px){#tp{grid-template-columns:minmax(0,1fr)}}
 .abtn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 6px;font-size:14px;min-width:0;line-height:1.25}.abtn small{font-size:11px;opacity:.8;font-weight:400}
 .ag2.off,.agt.off{opacity:.45;text-decoration:line-through}
 .hero{text-align:center;padding:22px 0 2px}.hero h1{font-size:34px}
@@ -214,10 +217,11 @@ body.tpon{padding-bottom:36vh}
 <div id="evh" hidden role="status"></div>
 <div class="gr">
 <aside class="cl"><div id="opps"></div><div class="pn"><div id="lg"></div></div></aside>
-<section class="cc"><div id="bd"><svg id="sv" viewBox="0 0 400 400" role="img" aria-label="윷판"></svg></div></section>
+<section class="cc"><div id="bd"><svg id="sv" viewBox="0 0 400 400" role="img" aria-label="윷판"></svg></div>
+<div class="pn" id="tp"><div class="tl"><div class="mat" id="sk"></div><div id="res"></div></div><div class="tr"><div id="st"></div><div id="q"></div>
+<div class="row"><button id="bt">윷 던지기</button><button id="nw" class="o"><i class="mini r"></i>새 말 출발</button></div></div></div></section>
 <aside class="cr"><div class="pn pl" id="cardMe"></div>
-<div class="pn" id="tp"><div class="mat" id="sk"></div><div id="res"></div><div id="st"></div><div id="q"></div>
-<div class="row"><button id="bt">윷 던지기</button><button id="nw" class="o"><i class="mini r"></i>새 말 출발</button></div><div id="ab"></div></div></aside>
+<div class="pn" id="abw" hidden><div id="ab"></div></div></aside>
 </div>
 </main><div id="evfx" aria-hidden="true"></div><div id="evw" hidden role="alert"></div>
 <div id="bn" hidden role="status" aria-live="polite"></div>
@@ -478,7 +482,7 @@ predict:{can:i=>S.ph=="throw"&&!S.pc[i].pred,use:async i=>{let r;if(isH(i)){r=aw
 jail:{can:i=>NP>1,use:async i=>{const j=await choosePlayer(i,others(i),"1차례 쉬게 할 플레이어",true);if(j==null)return false;S.pc[j].skip++;log(`${nmOf(i)}: 감옥! ${nmOf(j)}이(가) 1차례 쉽니다`);return true}},
 yutt:{can:i=>NP>1,use:async i=>{const j=await choosePlayer(i,others(i),"2차례 쉬게 할 플레이어",true);if(j==null)return false;S.pc[j].skip+=2;S.q.push(4);log(`${nmOf(i)}: 윷던지기! ${nmOf(j)}이(가) 2차례 쉬고, '윷'을 얻었습니다`);return true}},
 vote:{can:i=>NP>2,use:async i=>{const tally={};for(let j=0;j<S.pc.length;j++){const v=await choosePlayer(j,others(j),"투표: 2턴 쉬게 할 플레이어",false);tally[v]=(tally[v]||0)+(j==i?2:1)}
-const mx=Math.max(...Object.values(tally)),top=Object.keys(tally).filter(k=>tally[k]==mx).map(Number),w=rnd(top);S.pc[w].skip+=2;log(`${nmOf(i)}: 투표 결과 ${nmOf(w)}이(가) 2턴 쉽니다 (${Object.keys(tally).map(k=>nmOf(+k)+" "+tally[k]+"표").join(", ")})`);return true}},
+const mx=Math.max(...Object.values(tally)),top=Object.keys(tally).filter(k=>tally[k]==mx).map(Number),w=rnd(top);S.pc[w].skip+=2;log(`${nmOf(i)}: 투표 결과 ${nmOf(w)}이(가) 2턴 쉽니다 (${Object.keys(tally).map(k=>nmOf(+k)+" "+tally[k]+"표").join(", ")})`);banner(`🗳️ 투표 결과! ${iga(nmOf(w))} 최다 득표 (${tally[w]}표) · 2턴 쉽니다${top.length>1?" (동률 추첨)":""}`);return true}},
 bomb:{can:i=>1,use:async i=>{const n=await choose(i,M.P.map((_,x)=>x).filter(x=>x!=0&&S.bombs[x]==null),"폭탄을 설치할 칸을 선택하세요");if(n==null)return false;S.bombs[n]=i;log(`${nmOf(i)}: 폭탄을 설치했습니다`);return true}},
 duel:{can:i=>NP>1,use:async i=>{const D={L:"왼쪽",R:"오른쪽"};const dir=isH(i)?await askAny(i,"결투: 어느 방향을 고를까요?",[{v:"L",l:"왼쪽"},{v:"R",l:"오른쪽"}],true):rnd(["L","R"]);if(dir==null)return false;
 const t=await choosePlayer(i,others(i),"결투: 방향을 맞힐 상대를 지목하세요",true);if(t==null)return false;
@@ -582,7 +586,7 @@ $("#st").textContent=S.ph=="over"?"게임 종료":S.ph=="pick"?"증강 선택 �
 $("#q").innerHTML=S.pm?`<button class="chip" data-cancel>취소</button>`:S.q.map((r,i)=>`<button class="chip ${own&&S.q.length>1&&i==Math.min(S.sel||0,S.q.length-1)?"sel":""}" data-q="${i}" ${own&&S.q.length>1&&!(r==6&&!S.pc[ME].p.some(q=>!q.d&&q.n>=0))?"":"disabled"}>${N[r]}</button>`).join("")+(S.tl>0&&S.q.length?`<span class="t">던질 기회 ${S.tl}번</span>`:"");
 const me=S.cur==ME&&!S.busy&&!S.pk;$("#bt").disabled=!(me&&S.ph=="throw");$("#nw").disabled=!(own&&a0>0&&Q()!=6);
 const bs=S.pc[ME].a.map(id=>AUG[id]).filter(x=>BT[x.k]);
-$("#ab").innerHTML=bs.map(x=>`<button class="abtn" data-bk="${x.k}" title="${x.d}" ${canUse(ME,x.k)?"":"disabled"}><b>${x.n}</b><small>${used(ME,x.k)?"사용함":x.u>1?`남은 ${x.u-(S.pc[ME].u[x.k]||0)}회`:x.u==1?"일회용":"매 턴 1회"}</small></button>`).join("");
+$("#abw").hidden=!bs.length;$("#ab").innerHTML=bs.map(x=>`<button class="abtn" data-bk="${x.k}" title="${x.d}" ${canUse(ME,x.k)?"":"disabled"}><b>${x.n}</b><small>${used(ME,x.k)?"사용함":x.u>1?`남은 ${x.u-(S.pc[ME].u[x.k]||0)}회`:x.u==1?"일회용":"매 턴 1회"}</small></button>`).join("");
 $("#cardMe").innerHTML=card(ME);$("#opps").innerHTML=S.pc.map((_,j)=>j).filter(j=>j!=ME).map(j=>`<div class="pn pl ${S.cur==j&&S.ph!="over"?"on":""}">${card(j)}</div>`).join("");$("#cardMe").classList.toggle("on",S.cur==ME&&S.ph!="over");
 const fx=[S.peace?`평화 협정 ${S.peace.left}턴`:"",S.revg?`후진 기어 ${S.revg.left}턴`:"",S.blk?"봉쇄":"",S.mon?`괴물 ${S.mon.left}턴`:""].filter(Boolean),nx=S.noAug?0:AUGR.find(x=>x>S.rnd);
 $("#tn").innerHTML=S.ph=="over"?"<b>게임 종료</b>":S.ord.map(i=>`<span class="tp2 ${i==S.cur?"act":""}"><i class="td ${COL[i]}"></i>${i==ME?"나":esc(nmOf(i))}</span>`).join("")+`<span class="t">${S.rnd}라운드${nx?` · 증강 선택 ${nx}라운드`:""}${fx.length?" · "+fx.join(" · "):""}</span>`;if(NET.on&&role=="host")snapSoon()}
@@ -610,7 +614,7 @@ reap:{n:"사신",ic:"💀",c:"#c79bff",d:"다음 턴 시작 시 도착 지점에
 fog:{n:"안개",ic:"☁️",c:"#c8d3dc",d:"2턴 동안 안개가 맵을 덮어 내 말 근처만 보입니다. 상대 말이 어디 있는지 알 수 없습니다"},
 harv:{n:"풍년",ic:"🍞",c:"#ffd27a",d:"무작위 칸에 빵이 떨어집니다. 먼저 먹은 사람은 '걸'을 얻습니다"}};
 const EVS=[6,10,14];
-const USEN={mine:["💥","매복지뢰를 설치했습니다! (위치는 비밀)"],luck:["🍀","행운을 사용했습니다! '모' 1개 획득"],bomber:["💣","자폭병을 사용했습니다!"],raid:["🗡️","기습을 사용했습니다! '빽도' 획득"],chance:["🎲","기회를 사용했습니다! 윷을 한 번 더 던집니다"],behead:["🪓","참수를 사용했습니다! 무작위 플레이어의 말이 모두 사라집니다"],block:["🚧","봉쇄를 사용했습니다! 이번 한 턴 지름길을 쓸 수 없습니다"],short:["🏃","지름길을 사용했습니다!"],warp:["🌀","워프게이트를 설치했습니다!"],jail:["⛓️","감옥을 사용했습니다!"],vote:["🗳️","투표를 진행했습니다!"],bomb:["💣","폭탄을 설치했습니다!"],rule:["🔗","규칙 위반을 사용했습니다! 두 말이 연결됩니다"],mon:["👾","괴물을 풀었습니다!"],hypno:["🌀","최면을 사용했습니다! 상대 말이 이동합니다"],dd:["☠️","죽음의 대가를 사용했습니다! '모' 획득"],swap:["🔄","위치변환을 사용했습니다! 말의 위치를 맞바꿉니다"],yutt:["🎯","윷던지기를 사용했습니다! 상대가 2차례 쉬고 '윷'을 얻습니다"]};
+const USEN={mine:["💥","매복지뢰를 설치했습니다! (위치는 비밀)"],luck:["🍀","행운을 사용했습니다! '모' 1개 획득"],bomber:["💣","자폭병을 사용했습니다!"],raid:["🗡️","기습을 사용했습니다! '빽도' 획득"],chance:["🎲","기회를 사용했습니다! 윷을 한 번 더 던집니다"],behead:["🪓","참수를 사용했습니다! 무작위 플레이어의 말이 모두 사라집니다"],block:["🚧","봉쇄를 사용했습니다! 이번 한 턴 지름길을 쓸 수 없습니다"],short:["🏃","지름길을 사용했습니다!"],warp:["🌀","워프게이트를 설치했습니다!"],jail:["⛓️","감옥을 사용했습니다!"],bomb:["💣","폭탄을 설치했습니다!"],rule:["🔗","규칙 위반을 사용했습니다! 두 말이 연결됩니다"],mon:["👾","괴물을 풀었습니다!"],hypno:["🌀","최면을 사용했습니다! 상대 말이 이동합니다"],dd:["☠️","죽음의 대가를 사용했습니다! '모' 획득"],swap:["🔄","위치변환을 사용했습니다! 말의 위치를 맞바꿉니다"],yutt:["🎯","윷던지기를 사용했습니다! 상대가 2차례 쉬고 '윷'을 얻습니다"]};
 const PASSN={dance:"💃 라스트 댄스! 던질 기회 +2 (완주 못 하면 필드 위 말이 사라집니다)",loan:"💳 대출! 던질 기회 +1, 다음 차례는 쉽니다",save:"🏦 적금! 던질 기회 +2, 다음 차례는 쉽니다",interest:"📈 이자! 던질 기회 +2"};
 const iga=n=>{const c=n.charCodeAt(n.length-1);return n+(c>=0xAC00&&c<=0xD7A3?((c-0xAC00)%28?"이":"가"):"이(가)")};
 const useNote=(i,k)=>{const t=USEN[k];if(t)banner(`${t[0]} ${iga(nmOf(i))} ${t[1]}`)};
@@ -753,7 +757,7 @@ try{if(window.claude&&claude.use)claude.use("room").then(r=>{RM=r;netHint()}).ca
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const view=v=>["lobby","room","gm"].forEach(k=>{$("#"+k).hidden=k!=v});
 const say=t=>{$("#lmsg").textContent=t||""};
-const BUILD="빌드 1116-g";
+const BUILD="빌드 1117-a";
 function netHint(){const e=$("#nhint");if(e)e.textContent=BUILD+" · "+!RM&&window.Peer?"방 코드를 친구에게 알려주면 다른 기기(PC·휴대폰)에서도 함께 할 수 있어요.":RM?"다른 컴퓨터와도 방 코드로 함께 할 수 있어요. 같이 할 사람은 이 페이지에 '기여자' 이상 권한으로 초대되어 있어야 합니다.":"이 화면에서는 온라인 연결을 쓸 수 없어, 같은 브라우저의 다른 탭끼리만 시험할 수 있습니다."}
 netHint();
 function send(m){m=Object.assign({from:ID,room:R?R.code:pend},m);try{if(NET.rm)NET.rm.emit("y",m).catch(e=>{if(e&&e.code=="not_permitted")say("이 계정은 방에 메시지를 보낼 권한이 없습니다. 페이지 소유자에게 '기여자' 이상 권한을 요청하세요.")});else if(NET.pp){if(role=="host")NET.conns.forEach(c=>{try{if(c.open)c.send(m)}catch(e){}});else if(NET.gc&&NET.gc.open)NET.gc.send(m)}else if(bc)bc.postMessage(m)}catch(e){}}
