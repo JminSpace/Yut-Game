@@ -362,7 +362,7 @@ const nh=!d?[]:d.back?(d.stay?pc.h.slice():pc.h.slice(0,d.ix)):pc.h.concat(d0.pa
 if(pc.n<0&&p.carry&&g.length>1){p.carry=0;["fuse","stack"].forEach(k=>{if(has(i,k))consume(i,k)})}
 let cap=0,goal=false;
 if(!d){const bi=S.pc.findIndex((o,j)=>j!=i&&has(j,"block2"));
-if(bi>=0){consume(bi,"block2");g.forEach(q=>{q.n=1;q.l="o";q.h=[{n:-1,l:"o"}]});log(`${nmOf(bi)}의 방해! ${nmOf(i)}의 완주가 무효가 되었습니다`);hop=1;cap=landing(i,g,1)}
+if(bi>=0){consume(bi,"block2");g.forEach(q=>{q.n=1;q.l="o";q.h=[{n:-1,l:"o"}]});log(`${nmOf(bi)}의 방해! ${nmOf(i)}의 완주가 무효가 되었습니다`);banner(`🚫 ${nmOf(bi)}의 방해! ${nmOf(i)}의 완주가 무효가 되었습니다`);hop=1;cap=landing(i,g,1)}
 else{g.forEach(finish);goal=true;hop=-9}}
 else{g.forEach(q=>{q.n=d.n;q.l=d.l;q.h=nh.slice()});hop=d.n;if(d.stay)log(`${nmOf(i)}: 평화 협정으로 뒤쪽 칸이 모두 막혀 제자리에 멈춥니다`);else if(d.n>=0)cap=landing(i,g,d.n)}
 return{cap,goal}}
@@ -778,7 +778,7 @@ function guestEnter(){NP=R.pl.length;ME=R.pl.findIndex(p=>p.id==ID);NAMES=R.pl.m
 clearInterval(NET.pi);NET.pi=setInterval(()=>{const k=S&&S.pk;if(!k)return;const left=20-Math.floor((Date.now()-k.t0)/1000);const e=$("#pkt");if(e)e.textContent=Math.max(0,left);const f=$("#pkb");if(f)f.style.width=Math.max(0,left/20*100)+"%"},250)}
 /* ---- 방장 → 모두: 상태 스냅샷 ---- */
 const PF=q=>[q.n,q.l,q.d?1:0];
-function ser(){const pk=S.pk,an=S.anim;return{t:"snap",q:++NET.seq,cur:S.cur,oi:S.oi,rnd:S.rnd,ph:S.ph,busy:S.busy?1:0,us:S.using?1:0,qq:S.q,tl:S.tl,mv:S.mv,sel:S.sel||0,ord:S.ord,ev:S.ev?{k:S.ev.k,s:S.ev.start}:null,hl:S.hail,br:S.breads,ty:S.tyl,na:S.noAug?1:0,ev:S.evt?1:0,nm:NAMES,map:MAPI,hop,
+function ser(){const pk=S.pk,an=S.anim;return{t:"snap",q:++NET.seq,cur:S.cur,oi:S.oi,rnd:S.rnd,ph:S.ph,busy:S.busy?1:0,us:S.using?1:0,qq:S.q,tl:S.tl,mv:S.mv,sel:S.sel||0,ord:S.ord,ek:S.ev?{k:S.ev.k,s:S.ev.start}:null,hl:S.hail,br:S.breads,ty:S.tyl,na:S.noAug?1:0,ev:S.evt?1:0,nm:NAMES,map:MAPI,hop,
 pc:S.pc.map(o=>({p:o.p.map(PF),a:o.a,u:o.u,ut:o.usedT,sk:o.skip,cr:o.carry,pr:o.pred,ld:o.ld})),
 bm:S.bombs,mon:S.mon,blk:S.blk,pe:S.peace,rv:S.revg,an:an?{i:an.i,k:an.qs.map(q=>q.k),x:an.x,y:an.y}:null,
 pk:pk?{of:pk.offers,ch:pk.ch,l:Math.max(0,20-Math.floor((Date.now()-pk.t0)/1000))}:null,rq:S.rq,end:S.end,lg:LOGS}}
@@ -792,7 +792,7 @@ if(!S){setMap(m.map>=0&&m.map<MAPS.length?m.map:0);NP=m.pc.length;$("#sk").inner
 NAMES=m.nm;S.noAug=m.na?1:0;S.evt=m.ev?1:0;S.cur=m.cur;S.oi=m.oi;S.rnd=m.rnd;S.ph=m.ph;S.busy=m.busy;S.using=m.us;S.tl=m.tl;S.mv=m.mv;S.ord=m.ord;hop=m.hop;
 if(JSON.stringify(S.q)!=JSON.stringify(m.qq)){S.q=m.qq;S.sel=m.sel}
 S.pc=m.pc.map((o,i)=>({p:o.p.map((x,k)=>({n:x[0],l:x[1],d:x[2],h:[],o:i,k})),a:o.a,u:o.u||{},usedT:o.ut||{},skip:o.sk,carry:o.cr,pred:o.pr,ld:o.ld}));
-S.bombs=m.bm||{};S.mon=m.mon;S.blk=m.blk;S.peace=m.pe;S.revg=m.rv;S.rq=m.rq;
+S.ev=m.ek&&EV[m.ek.k]?{k:m.ek.k,start:m.ek.s}:null;S.hail=m.hl||[];S.breads=m.br||[];S.tyl=m.ty||null;S.bombs=m.bm||{};S.mon=m.mon;S.blk=m.blk;S.peace=m.pe;S.revg=m.rv;S.rq=m.rq;
 S.anim=m.an&&S.pc[m.an.i]?{i:m.an.i,qs:m.an.k.map(k=>S.pc[m.an.i].p[k]).filter(Boolean),x:m.an.x,y:m.an.y}:null;
 const lg=JSON.stringify(m.lg);if(lg!=NET.lgs){NET.lgs=lg;$("#lg").innerHTML=(m.lg||[]).map(t=>`<div>${esc(t)}</div>`).join("")}
 let pkNew=false;
