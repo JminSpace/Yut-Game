@@ -273,7 +273,7 @@ A("dd","희귀","죽음의 대가","사용 시 '모'를 얻습니다. 그 턴에
 A("block2","희귀","방해","다른 플레이어의 완주를 한 번 무효로 하고 출발점 +1칸으로 돌려보냅니다","일회용",{u:1}),
 A("silence","희귀","침묵","나를 포함한 모든 플레이어의 증강을 없앱니다","즉시"),
 A("gamble","전설","도박꾼","게임이 끝날 때까지 '도' 아니면 '모'만 50:50으로 나옵니다. '모'로 얻는 추가 던지기는 한 차례에 1번뿐입니다","지속"),
-A("charge","전설","맹렬 돌진","내 말 1개가 지금 있는 라인의 끝(다음 모서리, 지름길 위라면 지름길의 끝)까지 앞으로 돌진합니다. 지나친 상대 말은 모두 사라집니다","버튼·일회용",{u:1}),
+A("charge","전설","맹렬 돌진","내 말 1개가 지금 있는 라인의 끝까지 앞으로 돌진합니다. 지나친 상대 말은 모두 사라집니다","버튼·일회용",{u:1}),
 A("swap","전설","위치변환","내 말 1개와 상대 말 1개의 위치를 맞바꿉니다","버튼·일회용",{u:1}),
 A("revg","전설","후진 기어","내 3턴 동안 모든 플레이어의 '빽도' 확률이 50%가 됩니다","3턴"),
 A("master","전설","승부사","윷·모가 나오지 않는 대신, 말이 1개라도 완주하면 즉시 승리합니다","지속"),
@@ -347,8 +347,8 @@ const nodesOf=(i)=>[...new Set(fld(i).map(q=>q.n))];
 const oppNodes=(i)=>[...new Set(S.pc.flatMap((o,j)=>j==i?[]:nodesOf(j)))];
 const at=(j,n)=>S.pc[j].p.filter(q=>!q.d&&q.n==n);
 const ownerAt=(n,ex)=>S.pc.findIndex((o,j)=>j!=ex&&o.p.some(q=>!q.d&&q.n==n));
-function sendBack(q){if(q.d)return;q.n=-1;q.l="o";q.h=[];const ls=S.links.filter(L=>L.b===q);S.links=S.links.filter(L=>L.b!==q&&L.a!==q);ls.forEach(L=>sendBack(L.a))}
-function finish(q){if(q.d)return;q.d=1;q.n=-2;const ls=S.links.filter(L=>L.b===q);S.links=S.links.filter(L=>L.b!==q&&L.a!==q);ls.forEach(L=>finish(L.a))}
+function sendBack(q){if(q.d)return;q.n=-1;q.l="o";q.h=[];const ls=S.links.filter(L=>L.b===q);S.links=S.links.filter(L=>L.b!==q&&L.a!==q);if(ls.length)banner(`🔗 규칙 위반! ${nmOf(ls[0].a.o)}의 연결된 말도 함께 잡혔습니다`);ls.forEach(L=>sendBack(L.a))}
+function finish(q){if(q.d)return;q.d=1;q.n=-2;const ls=S.links.filter(L=>L.b===q);S.links=S.links.filter(L=>L.b!==q&&L.a!==q);if(ls.length)banner(`🔗 규칙 위반! ${nmOf(ls[0].a.o)}의 연결된 말도 함께 완주했습니다`);ls.forEach(L=>finish(L.a))}
 const wipe=j=>S.pc[j].p.forEach(q=>{if(!q.d&&q.n>=0)sendBack(q)});
 function grp(i,k){const p=S.pc[i],pc=p.p[k];if(pc.n<0)return p.carry?p.p.filter(q=>!q.d&&q.n<0):[pc];return p.p.filter(q=>!q.d&&q.n==pc.n)}
 const occ=(n,ex)=>S.pc.some((o,j)=>j!=ex&&o.p.some(q=>!q.d&&q.n==n));
@@ -357,30 +357,31 @@ if(ix<L-1&&(ix<0||h[ix].n<0))return{n:pc.n,l:pc.l,back:1,stay:1,ix:L};
 const e=h[ix];return e?{n:e.n,l:e.l,back:1,ix}:{n:-1,l:"o",back:1,ix:0}}
 function peaceAdj(i,d){const ex=[],more=[];if(S.peace&&d){let c=0;while(d&&d.n>=0&&occ(d.n,i)&&c++<9){ex.push({n:d.n,l:d.l});const y=st({n:d.n,l:d.l},false);more.push(y?{n:y.n}:{n:0,fin:1});d=y?{n:y.n,l:y.l,path:d.path}:null}}return{d,ex,more}}
 function landing(i,g,n){
-if(S.mon&&S.mon.n==n){g.forEach(sendBack);log("괴물에게 잡아먹혔습니다!");return 0}
+if(S.mon&&S.mon.n==n){g.forEach(sendBack);log("괴물에게 잡아먹혔습니다!");banner(`👾 ${nmOf(i)}의 말이 괴물에게 잡아먹혔습니다!`);return 0}
 let cap=0;
 for(let j=0;j<S.pc.length;j++){if(j==i)continue;const vs=S.pc[j].p.filter(q=>!q.d&&q.n==n);if(!vs.length)continue;
 if(has(j,"mirror")){consume(j,"mirror");g.forEach(sendBack);log(`${nmOf(j)}의 거울 모드! ${nmOf(i)}의 말이 대신 잡혔습니다`);banner(`🪞 ${nmOf(j)}의 거울 모드! ${nmOf(i)}의 말이 대신 잡혔습니다`);return 0}
 vs.forEach(q=>{sendBack(q);S.pc[i].kills++;cap++})}
-if(cap&&has(i,"twin"))adj(n).forEach(m=>S.pc.forEach((o,j)=>{if(j==i)return;o.p.forEach(q=>{if(!q.d&&q.n==m){sendBack(q);S.pc[i].kills++;cap++}})}));
+if(cap&&has(i,"twin")){const c0=cap;adj(n).forEach(m=>S.pc.forEach((o,j)=>{if(j==i)return;o.p.forEach(q=>{if(!q.d&&q.n==m){sendBack(q);S.pc[i].kills++;cap++}})}));if(cap>c0)banner(`🎯 ${nmOf(i)}: 일석이조! 주변 말 ${cap-c0}개도 함께 잡았습니다`)}
 if(S.bombs[n]!=null){delete S.bombs[n];S.pc[i].skip++;log(`${nmOf(i)}: 폭탄을 밟았습니다! 1차례 쉽니다`);banner(`💣 ${nmOf(i)}이(가) 폭탄을 밟았습니다! 1차례 쉽니다`)}
 if(S.breads&&S.breads.includes(n))eatBread(i,n);
 if(S.mines&&S.mines[n]!=null){const o=S.mines[n];delete S.mines[n];g.forEach(sendBack);log(`💥 ${nmOf(i)}: 매복지뢰를 밟았습니다! 말이 사라졌습니다 (설치자 ${nmOf(o)})`);banner(`💥 ${nmOf(i)}이(가) ${nmOf(o)}의 매복지뢰를 밟았습니다!`);popAt(n,"💥");return cap}
 if(S.warps&&S.warps[n]!=null){const o=S.warps[n];delete S.warps[n];if(n!=1){g.forEach(q=>{q.n=1;q.l="o";q.h=[{n:-1,l:"o"}]});hop=1;log(`🌀 ${nmOf(i)}: 워프게이트! 출발점 +1칸으로 이동합니다 (설치자 ${nmOf(o)})`);banner(`🌀 ${nmOf(i)}이(가) 워프게이트를 밟았습니다! 출발점 +1칸으로 이동`);popAt(n,"🌀");cap+=landing(i,g,1)}}
 return cap}
 function mv(i,k,r,sc){const p=S.pc[i],pl=p.p,pc=pl[k],g=grp(i,k);let d0=r==6?(bkFin(pc)?null:bkDest(i,pc)):dest(pc,stp(i,r),sc),d=d0,ex=[];
-if(d0&&!d0.back){const a=peaceAdj(i,d0);d=a.d;ex=a.ex}
+if(d0&&!d0.back){const a=peaceAdj(i,d0);d=a.d;ex=a.ex;if(ex.length)banner(`🕊️ ${nmOf(i)}: 평화 협정! 상대 말을 잡지 않고 ${ex.length}칸 더 전진합니다`)}
 const nh=!d?[]:d.back?(d.stay?pc.h.slice():pc.h.slice(0,d.ix)):pc.h.concat(d0.path,ex.map(e=>({n:e.n,l:e.l})));
 if(pc.n<0&&p.carry&&g.length>1){p.carry=0;["fuse","stack"].forEach(k=>{if(has(i,k)){consume(i,k);banner(k=="fuse"?`🧱 ${nmOf(i)}: 4단 합체! 말 4개가 함께 출발합니다`:`📦 ${nmOf(i)}: 중첩! 남은 말을 모두 업고 출발합니다`)}})}
 let cap=0,goal=false;
 if(!d){const bi=S.pc.findIndex((o,j)=>j!=i&&has(j,"block2"));
 if(bi>=0){consume(bi,"block2");g.forEach(q=>{q.n=1;q.l="o";q.h=[{n:-1,l:"o"}]});log(`${nmOf(bi)}의 방해! ${nmOf(i)}의 완주가 무효가 되었습니다`);banner(`🚫 ${nmOf(bi)}의 방해! ${nmOf(i)}의 완주가 무효가 되었습니다`);hop=1;cap=landing(i,g,1)}
 else{g.forEach(finish);goal=true;hop=-9}}
-else{g.forEach(q=>{q.n=d.n;q.l=d.l;q.h=nh.slice()});hop=d.n;if(d.stay)log(`${nmOf(i)}: 평화 협정으로 뒤쪽 칸이 모두 막혀 제자리에 멈춥니다`);else if(d.n>=0)cap=landing(i,g,d.n)}
+else{g.forEach(q=>{q.n=d.n;q.l=d.l;q.h=nh.slice()});hop=d.n;if(d.stay){log(`${nmOf(i)}: 평화 협정으로 뒤쪽 칸이 모두 막혀 제자리에 멈춥니다`);banner(`🕊️ ${nmOf(i)}: 평화 협정으로 뒤쪽 칸이 막혀 제자리에 멈춥니다`)}else if(d.n>=0)cap=landing(i,g,d.n)}
 return{cap,goal}}
 function jump(i,g,n,l){g.forEach(q=>{q.h=q.h.concat([{n:q.n,l:q.l}]);q.n=n;q.l=l});hop=n;return landing(i,g,n)}
-let bnT=0;
-function showBn(t){const e=$("#bn");e.textContent=t;e.hidden=false;e.classList.remove("on");void e.offsetWidth;e.classList.add("on");clearTimeout(bnT);bnT=setTimeout(()=>{e.hidden=true},2000)}
+let bnT=0,bnQ=[],bnAt=0,PN=[];
+function drawBn(t){const e=$("#bn");e.textContent=t;e.hidden=false;e.classList.remove("on");void e.offsetWidth;e.classList.add("on");clearTimeout(bnT);bnAt=Date.now()+1500;bnT=setTimeout(()=>{const n=bnQ.shift();if(n!=null)drawBn(n);else e.hidden=true},2000)}
+function showBn(t){if(Date.now()<bnAt&&!$("#bn").hidden){bnQ.push(t);if(bnQ.length>4)bnQ.shift();return}drawBn(t)}
 function banner(t){showBn(t);bcast({t:"bn",x:t})}
 function log(t){LOGS.unshift(t);if(LOGS.length>7)LOGS.length=7;const e=document.createElement("div");e.textContent=t;$("#lg").prepend(e);while($("#lg").children.length>7)$("#lg").lastChild.remove()}
 function init(){G++;if(S&&S.pk)clearInterval(S.pk.iv);setMap(MAPI);
@@ -402,15 +403,15 @@ if(p.nt&&p.nt.length){const t=p.nt.map(k=>PASSN[k]).join(" / ");p.nt=[];banner(`
 next()}
 function endTurn(i,skipped){const p=S.pc[i];
 if(!skipped){const done=p.p.filter(q=>q.d).length>p.fin0;
-if(p.ldAct){p.ldAct=0;if(!done){wipe(i);log(`${nmOf(i)}: 라스트 댄스 실패! 필드 위 말이 모두 사라졌습니다`)}}
-if(p.dd){p.dd=0;if(!done){wipe(i);log(`${nmOf(i)}: 죽음의 대가! 필드 위 말이 모두 사라졌습니다`)}}}
+if(p.ldAct){p.ldAct=0;if(!done){wipe(i);log(`${nmOf(i)}: 라스트 댄스 실패! 필드 위 말이 모두 사라졌습니다`);banner(`💃 ${nmOf(i)}: 라스트 댄스 실패! 필드 위 말이 모두 사라졌습니다`)}else banner(`💃 ${nmOf(i)}: 라스트 댄스 성공! 말을 지켰습니다`)}
+if(p.dd){p.dd=0;if(!done){wipe(i);log(`${nmOf(i)}: 죽음의 대가! 필드 위 말이 모두 사라졌습니다`);banner(`☠️ ${nmOf(i)}: 죽음의 대가! 필드 위 말이 모두 사라졌습니다`)}else banner(`☠️ ${nmOf(i)}: 죽음의 대가를 피했습니다! (완주 성공)`)}}
 let fx=0;if(!skipped&&S.ev&&(S.ev.k=="snow"||S.ev.k=="wind")){fx=evTurnEnd(i);if(fx){ui();const w=checkWin(i);if(w)return endGame(w.win,w)}}
-if(S.peace&&S.peace.o==i&&--S.peace.left<=0){S.peace=null;log("평화 협정이 끝났습니다")}
-if(S.revg&&S.revg.o==i&&--S.revg.left<=0){S.revg=null;log("후진 기어가 끝났습니다")}
-if(S.mon&&S.mon.o==i){monMove();if(S.mon&&--S.mon.left<=0){S.mon=null;log("괴물이 사라졌습니다")}}
-if(S.blk){if(S.blk.on){S.blk=null;log("봉쇄가 풀렸습니다")}else S.blk.on=1}
+if(S.peace&&S.peace.o==i&&--S.peace.left<=0){S.peace=null;log("평화 협정이 끝났습니다");banner("🕊️ 평화 협정이 끝났습니다")}
+if(S.revg&&S.revg.o==i&&--S.revg.left<=0){S.revg=null;log("후진 기어가 끝났습니다");banner("⏪ 후진 기어가 끝났습니다")}
+if(S.mon&&S.mon.o==i){monMove();if(S.mon&&--S.mon.left<=0){S.mon=null;log("괴물이 사라졌습니다");banner("👾 괴물이 사라졌습니다")}}
+if(S.blk){if(S.blk.on){S.blk=null;log("봉쇄가 풀렸습니다");banner("🚧 봉쇄가 풀렸습니다. 다시 지름길을 쓸 수 있습니다")}else S.blk.on=1}
 S.oi=(S.oi+1)%S.ord.length;if(S.oi==0)S.rnd++;if(fx){S.busy=1;const g1=G;setTimeout(()=>{if(g1==G){S.busy=0;turn()}},1000)}else turn()}
-function monMove(){const m=S.mon;m.n=rnd(adj(m.n).filter(x=>x!=0)||[m.n])||m.n;let k=0;S.pc.forEach(o=>o.p.forEach(q=>{if(!q.d&&q.n==m.n){sendBack(q);k++}}));if(k)log("괴물이 말을 잡아먹었습니다!")}
+function monMove(){const m=S.mon;m.n=rnd(adj(m.n).filter(x=>x!=0)||[m.n])||m.n;let k=0;S.pc.forEach(o=>o.p.forEach(q=>{if(!q.d&&q.n==m.n){sendBack(q);k++}}));if(k){log("괴물이 말을 잡아먹었습니다!");banner(`👾 괴물이 말 ${k}개를 잡아먹었습니다!`)}}
 function drawFrom(pool){const W={"일반":60,"희귀":30,"전설":10},ts=["일반","희귀","전설"].filter(t=>pool.some(x=>AUG[x].t==t));if(!ts.length)return null;let r=Math.random()*ts.reduce((s,t)=>s+W[t],0),t=ts[ts.length-1];for(const c of ts){r-=W[c];if(r<0){t=c;break}}return rnd(pool.filter(x=>AUG[x].t==t))}
 function offerFor(i){const own=S.pc[i].a;let pool=AUG.map((_,x)=>x).filter(x=>!own.includes(x)&&(!AUG[x].start||S.rnd==1));const out=[];while(out.length<3&&pool.length){const x=drawFrom(pool);out.push(x);pool=pool.filter(y=>y!=x)}return out}
 function startPick(){const g=G;S.ph="pick";S.cur=-1;S.pkDone=S.rnd;S.busy=0;sfx("aug");
@@ -426,34 +427,37 @@ $("#bx").innerHTML=`<div class="ahd">증강을 선택하세요</div><div class="
 `<div class="pw" id="pkw">${pkWait()}</div>`;$("#ov").classList.add("on")}
 function pick(i,id,auto){const k=S.pk;if(!k||k.ch[i]!=null||!k.offers[i].includes(id))return;k.ch[i]=id;if(i==ME){sfx("pick");if(auto)log("시간 초과: 증강이 무작위로 선택되었습니다")}
 if(k.ch.every(x=>x!=null))return finishPick();if(i==ME)renderPick();else{const e=$("#pkw");if(e)e.innerHTML=pkWait()}}
-function finishPick(){clearInterval(S.pk.iv);const ch=S.pk.ch.slice();S.pk=null;$("#ov").classList.remove("on");
+function finishPick(){PN=[];clearInterval(S.pk.iv);const ch=S.pk.ch.slice();S.pk=null;$("#ov").classList.remove("on");
 S.ord.forEach(h=>{if(ch[h]>=0&&AUG[ch[h]].k=="hack"){log(`${nmOf(h)}의 해킹! 다른 플레이어의 이번 증강이 사라졌습니다`);ch.forEach((x,j)=>{if(j!=h&&x>=0)ch[j]=-2})}});
 S.lastBy=null;
 for(const i of S.ord){if(ch[i]==-2){log(`${nmOf(i)}의 증강이 해킹으로 사라졌습니다`);continue}const id=ch[i];S.pc[i].a.push(id);applyAug(i,id);if(S.lastBy!=null)break}
 if(S.lastBy!=null)return endGame(null,{last:S.lastBy});
+if(PN.length){banner(PN.join(" / "));PN=[]}
 S.oi=0;S.ph="throw";turn()}
 function applyAug(i,id){const a=AUG[id],p=S.pc[i];log(`${nmOf(i)} 증강: ${a.n}`);
 switch(a.k){
-case"wheel":S.ord=shuf(S.ord);S.oi=0;log("진행 순서: "+S.ord.map(nmOf).join(" → "));break;
+case"wheel":S.ord=shuf(S.ord);S.oi=0;log("진행 순서: "+S.ord.map(nmOf).join(" → "));PN.push(`🎡 ${nmOf(i)}: 돌림판! 순서 ${S.ord.map(nmOf).join(" → ")}`);break;
+case"hard":PN.push(`😤 ${nmOf(i)}: 하드코어! 이번 증강은 없습니다`);break;
+case"speed":PN.push(`🏁 ${nmOf(i)}: 스피드게임! 모두 말 3개만 완주하면 승리합니다`);break;
 case"last":S.lastBy=i;break;
-case"refresh":{const n=Math.max(1,p.a.length-1);p.a=[];p.u={};const leg=AUG.map((_,x)=>x).filter(x=>AUG[x].t=="전설");for(let t=0;t<n&&leg.length;t++){const x=leg.splice(Math.random()*leg.length|0,1)[0];p.a.push(x);applyAug(i,x)}break}
-case"rand":{const pool=AUG.map((_,x)=>x).filter(x=>!["refresh","rand","last"].includes(AUG[x].k)&&!p.a.includes(x)&&(!AUG[x].start||S.rnd==1));const x=drawFrom(pool);if(x!=null){p.a.push(x);applyAug(i,x)}break}
-case"silence":S.pc.forEach(o=>{o.a=[];o.u={}});break;
-case"hack":p.ptl+=2;break;
-case"bind":p.pq.push(5,5);break;
+case"refresh":{const n=Math.max(1,p.a.length-1);p.a=[];p.u={};const leg=AUG.map((_,x)=>x).filter(x=>AUG[x].t=="전설");for(let t=0;t<n&&leg.length;t++){const x=leg.splice(Math.random()*leg.length|0,1)[0];p.a.push(x);applyAug(i,x)}PN.push(`♻️ ${nmOf(i)}: 새로고침! 증강이 전설 증강으로 바뀌었습니다`);break}
+case"rand":{const pool=AUG.map((_,x)=>x).filter(x=>!["refresh","rand","last"].includes(AUG[x].k)&&!p.a.includes(x)&&(!AUG[x].start||S.rnd==1));const x=drawFrom(pool);if(x!=null){p.a.push(x);applyAug(i,x);PN.push(`🎁 ${nmOf(i)}: 무작위! '${AUG[x].n}' 획득`)}break}
+case"silence":S.pc.forEach(o=>{o.a=[];o.u={}});PN.push(`🤫 ${nmOf(i)}: 침묵! 모든 플레이어의 증강이 사라졌습니다`);break;
+case"hack":p.ptl+=2;PN.push(`💻 ${nmOf(i)}: 해킹! 다른 플레이어의 이번 증강이 사라졌습니다`);break;
+case"bind":p.pq.push(5,5);PN.push(`⛓️ ${nmOf(i)}: 구속! '모' 2개 획득`);break;
 case"fuse":case"stack":p.carry=1;break;
 case"dance":p.ld=1;(p.nt=p.nt||[]).push("dance");consume(i,"dance");break;
 case"loan":p.ptl+=1;p.pskip+=1;(p.nt=p.nt||[]).push("loan");consume(i,"loan");break;
 case"save":p.ptl+=2;p.pskip+=1;(p.nt=p.nt||[]).push("save");consume(i,"save");break;
 case"interest":p.ptl+=2;(p.nt=p.nt||[]).push("interest");consume(i,"interest");break;
-case"peace":S.peace={o:i,left:3};break;
-case"revg":S.revg={o:i,left:3};break}}
+case"peace":S.peace={o:i,left:3};PN.push(`🕊️ ${nmOf(i)}: 평화 협정! 3턴 동안 말을 잡을 수 없습니다`);break;
+case"revg":S.revg={o:i,left:3};PN.push(`⏪ ${nmOf(i)}: 후진 기어! 3턴 동안 모두의 '빽도' 확률이 50%입니다`);break}}
 function ranking(win){const sc=j=>S.pc[j].p.filter(q=>q.d).length*10+fld(j).length;const rest=S.pc.map((_,j)=>j).filter(j=>j!=win).sort((a,b)=>sc(b)-sc(a)||a-b);const r=[win,...rest];
-const w=r[1];if(w!=null&&S.pc[w].a.includes(KEY.rev)){[r[0],r[1]]=[r[1],r[0]];log(`${nmOf(w)}: 역전! 1등과 순위를 바꿨습니다`)}return r}
+const w=r[1];if(w!=null&&S.pc[w].a.includes(KEY.rev)){[r[0],r[1]]=[r[1],r[0]];log(`${nmOf(w)}: 역전! 1등과 순위를 바꿨습니다`);S.revW=w}return r}
 function endGame(win,o){o=o||{};if(S.pk)clearInterval(S.pk.iv);S.ph="over";S.busy=0;S.pm=null;let r;
 if(o.last!=null){const ot=S.pc.map((_,j)=>j).filter(j=>j!=o.last),w=rnd(ot),rest=ot.filter(j=>j!=w).sort((a,b)=>S.pc[b].p.filter(q=>q.d).length-S.pc[a].p.filter(q=>q.d).length);r=[w,...rest,o.last]}else r=ranking(win);
-S.end={r,last:o.last!=null?o.last:-1,why:o.why||""};ui();showEnd()}
-function showEnd(){const e=S.end;if(!e)return;const r=e.r;sfx(r[0]==ME?"win":"lose");const sub=e.last>=0?`${esc(nmOf(e.last))}이(가) 꼴지를 선택해 게임이 끝났습니다.`:e.why?e.why+" 효과로 즉시 승리!":(r[0]==ME?"증강 조합이 잘 맞았네요.":"증강 조합을 바꿔 다시 도전해 보세요.");
+S.end={r,last:o.last!=null?o.last:-1,why:o.why||"",rv:S.revW!=null?S.revW:-1};S.revW=null;ui();showEnd()}
+function showEnd(){const e=S.end;if(!e)return;const r=e.r;sfx(r[0]==ME?"win":"lose");const sub=e.last>=0?`${esc(nmOf(e.last))}이(가) 꼴지를 선택해 게임이 끝났습니다.`:e.why?e.why+" 효과로 즉시 승리!":(r[0]==ME?"증강 조합이 잘 맞았네요.":"증강 조합을 바꿔 다시 도전해 보세요.")+(e.rv>=0?` (${esc(nmOf(e.rv))}의 역전 효과로 1등과 순위가 바뀌었습니다)`:"");
 $("#bx").innerHTML=`<b style="font-size:22px">${r[0]==ME?"승리했습니다!":esc(nmOf(r[0]))+" 승리"}</b><p>${sub}</p><ol class="rk">${r.map(j=>`<li>${esc(nmOf(j))} · 완주 ${S.pc[j].p.filter(q=>q.d).length}/4</li>`).join("")}</ol>${NET.on?'<button onclick="leaveRoom()">로비로</button>':'<button onclick="init()">다시 하기</button>'}`;$("#ov").classList.add("on")}
 const winN=()=>S.pc.some((_,j)=>has(j,"speed"))?3:4;
 function checkWin(i){const p=S.pc[i],d=p.p.filter(q=>q.d).length;if(d>=winN())return{win:i,why:d<4?"스피드게임":undefined};if(d>0&&has(i,"master"))return{win:i,why:"승부사"};if(p.kills>=5&&has(i,"slayer"))return{win:i,why:"학살자"};return null}
@@ -476,24 +480,24 @@ raid:{can:i=>fld(i).length>0,use:async i=>{S.q.push(6);log(`${nmOf(i)}: 기습! 
 dd:{can:i=>1,use:async i=>{S.q.push(5);S.pc[i].dd=1;log(`${nmOf(i)}: 죽음의 대가! '모'를 얻었습니다`);return true}},
 block:{can:i=>!S.blk,use:async i=>{S.blk={on:0};log(`${nmOf(i)}: 봉쇄! 다음 한 턴 동안 지름길을 쓸 수 없습니다`);return true}},
 behead:{can:i=>S.pc.some((_,j)=>fld(j).length),use:async i=>{const j=rnd(S.pc.map((_,x)=>x).filter(x=>fld(x).length));wipe(j);log(`${nmOf(i)}: 참수! ${nmOf(j)}의 말이 모두 사라졌습니다`);return true}},
-bomber:{can:i=>fld(i).length>0,use:async i=>{const n=await choose(i,nodesOf(i),"자폭할 내 말을 선택하세요");if(n==null)return false;const ns=[n,...adj(n)];let k=0;S.pc.forEach(o=>o.p.forEach(q=>{if(!q.d&&ns.includes(q.n)){sendBack(q);k++}}));log(`${nmOf(i)}: 자폭! 말 ${k}개가 사라졌습니다`);return true}},
+bomber:{can:i=>fld(i).length>0,use:async i=>{const n=await choose(i,nodesOf(i),"자폭할 내 말을 선택하세요");if(n==null)return false;const ns=[n,...adj(n)];let k=0;S.pc.forEach(o=>o.p.forEach(q=>{if(!q.d&&ns.includes(q.n)){sendBack(q);k++}}));S.un=` ▶ 말 ${k}개 사라짐`;log(`${nmOf(i)}: 자폭! 말 ${k}개가 사라졌습니다`);return true}},
 short:{can:i=>ringPcs(i).length>0,use:async i=>{const n=await choose(i,ringPcs(i),"지름길 입구로 보낼 말을 선택하세요");if(n==null)return false;const to=nextEntrance(n),c=jump(i,at(i,n),to,"o");if(c>0){S.tl++;log(`${nmOf(i)}: 지름길 이동 중 상대 말을 잡았습니다!`)}else log(`${nmOf(i)}: 지름길 입구로 이동했습니다`);return true}},
 predict:{can:i=>S.ph=="throw"&&!S.pc[i].pred,use:async i=>{let r;if(isH(i)){r=await askAny(i,"다음 윷을 예측하세요 (맞히면 던질 기회 +1)",[1,2,3,4,5,6].map(x=>({v:x,l:N[x]})),true);if(r==null)return false;r=+r}else r=rnd([1,2,2,2,3,3,4,5]);S.pc[i].pred=r;log(`${nmOf(i)}: 다음 윷은 '${N[r]}'`);return true}},
-jail:{can:i=>NP>1,use:async i=>{const j=await choosePlayer(i,others(i),"1차례 쉬게 할 플레이어",true);if(j==null)return false;S.pc[j].skip++;log(`${nmOf(i)}: 감옥! ${nmOf(j)}이(가) 1차례 쉽니다`);return true}},
-yutt:{can:i=>NP>1,use:async i=>{const j=await choosePlayer(i,others(i),"2차례 쉬게 할 플레이어",true);if(j==null)return false;S.pc[j].skip+=2;S.q.push(4);log(`${nmOf(i)}: 윷던지기! ${nmOf(j)}이(가) 2차례 쉬고, '윷'을 얻었습니다`);return true}},
+jail:{can:i=>NP>1,use:async i=>{const j=await choosePlayer(i,others(i),"1차례 쉬게 할 플레이어",true);if(j==null)return false;S.pc[j].skip++;S.un=` ▶ ${nmOf(j)} 1차례 쉼`;log(`${nmOf(i)}: 감옥! ${nmOf(j)}이(가) 1차례 쉽니다`);return true}},
+yutt:{can:i=>NP>1,use:async i=>{const j=await choosePlayer(i,others(i),"2차례 쉬게 할 플레이어",true);if(j==null)return false;S.pc[j].skip+=2;S.q.push(4);S.un=` ▶ ${nmOf(j)} 2차례 쉼`;log(`${nmOf(i)}: 윷던지기! ${nmOf(j)}이(가) 2차례 쉬고, '윷'을 얻었습니다`);return true}},
 vote:{can:i=>NP>2,use:async i=>{const tally={};for(let j=0;j<S.pc.length;j++){const v=await choosePlayer(j,others(j),"투표: 2턴 쉬게 할 플레이어",false);tally[v]=(tally[v]||0)+(j==i?2:1)}
 const mx=Math.max(...Object.values(tally)),top=Object.keys(tally).filter(k=>tally[k]==mx).map(Number),w=rnd(top);S.pc[w].skip+=2;log(`${nmOf(i)}: 투표 결과 ${nmOf(w)}이(가) 2턴 쉽니다 (${Object.keys(tally).map(k=>nmOf(+k)+" "+tally[k]+"표").join(", ")})`);banner(`🗳️ 투표 결과! ${iga(nmOf(w))} 최다 득표 (${tally[w]}표) · 2턴 쉽니다${top.length>1?" (동률 추첨)":""}`);return true}},
 bomb:{can:i=>1,use:async i=>{const n=await choose(i,M.P.map((_,x)=>x).filter(x=>x!=0&&S.bombs[x]==null),"폭탄을 설치할 칸을 선택하세요");if(n==null)return false;S.bombs[n]=i;log(`${nmOf(i)}: 폭탄을 설치했습니다`);return true}},
 duel:{can:i=>NP>1,use:async i=>{const D={L:"왼쪽",R:"오른쪽"};const dir=isH(i)?await askAny(i,"결투: 어느 방향을 고를까요?",[{v:"L",l:"왼쪽"},{v:"R",l:"오른쪽"}],true):rnd(["L","R"]);if(dir==null)return false;
 const t=await choosePlayer(i,others(i),"결투: 방향을 맞힐 상대를 지목하세요",true);if(t==null)return false;
 const gs=isH(t)?await askAny(t,`${esc(nmOf(i))}의 결투! 어느 방향을 골랐을까요?`,[{v:"L",l:"왼쪽"},{v:"R",l:"오른쪽"}],false):rnd(["L","R"]);
-if(gs==dir){banner(`${nmOf(t)}이(가) 결투에서 맞혔습니다! (${D[dir]})`);grantMo(t);log(`${nmOf(i)}의 결투: ${nmOf(t)}이(가) 맞혔습니다 (${D[dir]}) → ${nmOf(t)}에게 '모'`)}else{grantMo(i);log(`${nmOf(i)}의 결투: ${nmOf(t)}이(가) 틀렸습니다 (${D[dir]}) → ${nmOf(i)}에게 '모'`)}return true}},
+if(gs==dir){banner(`⚔️ 결투! ${nmOf(i)}의 ${D[dir]} 선택을 ${iga(nmOf(t))} 맞혔습니다 — 승리: ${nmOf(t)} / 패배: ${nmOf(i)} ('모' 획득: ${nmOf(t)})`);grantMo(t);log(`${nmOf(i)}의 결투: ${nmOf(t)}이(가) 맞혔습니다 (${D[dir]}) → ${nmOf(t)}에게 '모'`)}else{banner(`⚔️ 결투! ${nmOf(i)}의 ${D[dir]} 선택을 ${iga(nmOf(t))} 틀렸습니다 — 승리: ${nmOf(i)} / 패배: ${nmOf(t)} ('모' 획득: ${nmOf(i)})`);grantMo(i);log(`${nmOf(i)}의 결투: ${nmOf(t)}이(가) 틀렸습니다 (${D[dir]}) → ${nmOf(i)}에게 '모'`)}return true}},
 chaos:{can:i=>S.pc.reduce((s,_,j)=>s+nodesOf(j).length,0)>=2,use:async i=>{const gs=[];S.pc.forEach((o,j)=>nodesOf(j).forEach(n=>{const a=at(j,n);gs.push({a,pos:{n,l:a[0].l,h:a[0].h.slice()}})}));const ps=shuf(gs.map(x=>x.pos));gs.forEach((x,k)=>{const p=ps[k];x.a.forEach(q=>{q.n=p.n;q.l=p.l;q.h=p.h.slice()})});log(`${nmOf(i)}: 대격변! 모든 말의 위치가 뒤섞였습니다`);return true}},
-rule:{can:i=>fld(i).length>0&&oppNodes(i).length>0,use:async i=>{const a=await choose(i,nodesOf(i),"연결할 내 말을 선택하세요");if(a==null)return false;const b=await choose(i,oppNodes(i),"따라다닐 상대 말을 선택하세요");if(b==null)return false;S.links.push({a:at(i,a)[0],b:at(ownerAt(b,i),b)[0]});log(`${nmOf(i)}: 규칙 위반! 내 말이 상대 말과 운명을 같이합니다`);return true}},
+rule:{can:i=>fld(i).length>0&&oppNodes(i).length>0,use:async i=>{const a=await choose(i,nodesOf(i),"연결할 내 말을 선택하세요");if(a==null)return false;const b=await choose(i,oppNodes(i),"따라다닐 상대 말을 선택하세요");if(b==null)return false;S.links.push({a:at(i,a)[0],b:at(ownerAt(b,i),b)[0]});S.un=` ▶ ${nmOf(ownerAt(b,i))}의 말과 연결`;log(`${nmOf(i)}: 규칙 위반! 내 말이 상대 말과 운명을 같이합니다`);return true}},
 mine:{can:i=>1,use:async i=>{const n=await choose(i,M.P.map((_,x)=>x).filter(x=>x!=0&&S.mines[x]==null),"지뢰를 설치할 칸을 선택하세요 (다른 사람에게는 보이지 않습니다)");if(n==null)return false;S.mines[n]=i;log(`${nmOf(i)}: 매복지뢰를 설치했습니다`);return true}},
 warp:{can:i=>1,use:async i=>{const n=await choose(i,M.P.map((_,x)=>x).filter(x=>x!=0&&x!=1&&S.warps[x]==null),"워프게이트를 설치할 칸을 선택하세요");if(n==null)return false;S.warps[n]=i;log(`${nmOf(i)}: 워프게이트를 설치했습니다`);return true}},
 mon:{can:i=>!S.mon,use:async i=>{const n=rnd(M.P.map((_,x)=>x).filter(x=>x!=0));S.mon={n,left:3,o:i};S.pc.forEach(o=>o.p.forEach(q=>{if(!q.d&&q.n==n)sendBack(q)}));log(`${nmOf(i)}: 괴물을 풀었습니다!`);return true}},
-hypno:{can:i=>oppNodes(i).length>0,use:async i=>{const a=await choose(i,oppNodes(i),"이동시킬 상대 말을 선택하세요");if(a==null)return false;const j=ownerAt(a,i);const free=M.P.map((_,x)=>x).filter(x=>x!=0&&x!=a&&!S.pc.some(o=>o.p.some(q=>!q.d&&q.n==x)));const b=await choose(i,free,"이동시킬 빈 칸을 선택하세요");if(b==null)return false;jump(j,at(j,a),b,laneOf(b));log(`${nmOf(i)}: 최면! ${nmOf(j)}의 말이 이동했습니다`);return true}},
+hypno:{can:i=>oppNodes(i).length>0,use:async i=>{const a=await choose(i,oppNodes(i),"이동시킬 상대 말을 선택하세요");if(a==null)return false;const j=ownerAt(a,i);const free=M.P.map((_,x)=>x).filter(x=>x!=0&&x!=a&&!S.pc.some(o=>o.p.some(q=>!q.d&&q.n==x)));const b=await choose(i,free,"이동시킬 빈 칸을 선택하세요");if(b==null)return false;jump(j,at(j,a),b,laneOf(b));S.un=` ▶ ${nmOf(j)}의 말 이동`;log(`${nmOf(i)}: 최면! ${nmOf(j)}의 말이 이동했습니다`);return true}},
 charge:{can:i=>fld(i).length>0,use:async i=>{const n=await choose(i,nodesOf(i),"돌진할 내 말을 선택하세요");if(n==null)return false;
 const g=at(i,n),pc=g[0],ring=pc.l=="o",sc=ring?false:undefined;let x={n:pc.n,l:pc.l},steps=0,first=true;
 while(steps<80){x=st(x,first,sc);first=false;steps++;if(!x)break;if(ring?(M.big.includes(x.n)&&x.n<M.L):x.l=="o")break}
@@ -503,7 +507,7 @@ S.anim={qs:g,i,x:P[n][0],y:P[n][1]};ui();snapNow();let from=P[n];
 for(const r of rt){const to=P[r.fin?0:r.n];bcast({t:"hop",f:from,to});await tw(from,to,110);from=to}
 S.anim=null;
 let k=0;if(!S.peace)S.pc.forEach((o,j)=>{if(j==i)return;o.p.forEach(q=>{if(!q.d&&q.n>=0&&mid.includes(q.n)){popAt(q.n,"💥");sendBack(q);S.pc[i].kills++;k++}})});
-if(k)log(`${nmOf(i)}: 돌진 중 지나친 상대 말 ${k}개가 사라졌습니다`);else if(S.peace)log("평화 협정 중이라 지나친 말은 그대로입니다");
+if(k){log(`${nmOf(i)}: 돌진 중 지나친 상대 말 ${k}개가 사라졌습니다`);banner(`💥 ${nmOf(i)}의 돌진! 지나친 상대 말 ${k}개가 사라졌습니다`)}else if(S.peace){log("평화 협정 중이라 지나친 말은 그대로입니다");banner("🕊️ 평화 협정 중이라 지나친 말은 그대로입니다")}
 let d=d0,ex=[];if(d0&&S.peace){const a=peaceAdj(i,d0);d=a.d;ex=a.ex}
 const nh=!d?[]:pc.h.concat(d0.path,ex.map(e=>({n:e.n,l:e.l})));
 if(!d){const bi=S.pc.findIndex((o,j)=>j!=i&&has(j,"block2"));
@@ -511,7 +515,7 @@ if(bi>=0){consume(bi,"block2");g.forEach(q=>{q.n=1;q.l="o";q.h=[{n:-1,l:"o"}]});
 else{g.forEach(finish);hop=-9;sfx("goal");log(nmOf(i)+"의 말이 돌진하여 완주했습니다")}}
 else{g.forEach(q=>{q.n=d.n;q.l=d.l;q.h=nh.slice()});hop=d.n;if(landing(i,g,d.n)>0){S.tl++;log(`${nmOf(i)}: 돌진 도착 지점에서 상대 말을 잡았습니다! 던질 기회 +1`)}}
 return true}},
-swap:{can:i=>fld(i).length>0&&oppNodes(i).length>0,use:async i=>{const a=await choose(i,nodesOf(i),"자리를 바꿀 내 말을 선택하세요");if(a==null)return false;const b=await choose(i,oppNodes(i),"자리를 바꿀 상대 말을 선택하세요");if(b==null)return false;const j=ownerAt(b,i),ga=at(i,a),gb=at(j,b),pa={n:a,l:ga[0].l,h:ga[0].h.slice()},pb={n:b,l:gb[0].l,h:gb[0].h.slice()};ga.forEach(q=>{q.n=pb.n;q.l=pb.l;q.h=pb.h.slice()});gb.forEach(q=>{q.n=pa.n;q.l=pa.l;q.h=pa.h.slice()});log(`${nmOf(i)}: 위치변환! ${nmOf(j)}와 말 위치를 맞바꿨습니다`);return true}},
+swap:{can:i=>fld(i).length>0&&oppNodes(i).length>0,use:async i=>{const a=await choose(i,nodesOf(i),"자리를 바꿀 내 말을 선택하세요");if(a==null)return false;const b=await choose(i,oppNodes(i),"자리를 바꿀 상대 말을 선택하세요");if(b==null)return false;const j=ownerAt(b,i),ga=at(i,a),gb=at(j,b),pa={n:a,l:ga[0].l,h:ga[0].h.slice()},pb={n:b,l:gb[0].l,h:gb[0].h.slice()};ga.forEach(q=>{q.n=pb.n;q.l=pb.l;q.h=pb.h.slice()});gb.forEach(q=>{q.n=pa.n;q.l=pa.l;q.h=pa.h.slice()});S.un=` ▶ ${nmOf(j)}와 위치 교환`;log(`${nmOf(i)}: 위치변환! ${nmOf(j)}와 말 위치를 맞바꿨습니다`);return true}},
 party:{can:i=>NP>1,use:async i=>{others(i).forEach(j=>S.pc[j].forceDo=1);log(`${nmOf(i)}: 파티! 다른 플레이어의 다음 윷이 '도'가 됩니다`);return true}}};
 function act(a,o){o=Object.assign({},o);if(a=="go"||a=="nw")o.sel=S.sel||0;if(role=="guest"&&NET.on){send({t:"act",a,o});return}doAct(ME,a,o)}
 function doAct(i,a,o){o=o||{};if(!S||S.ph=="over")return;
@@ -534,17 +538,18 @@ function pg(x,y,i,c,k,cl,hp,id){return `<g ${id?`id="${id}" `:""}transform="tran
 function next(){const p=S.pc[S.cur];while(S.q.length&&S.tl==0&&S.q.every(r=>r==6)&&!p.p.some(q=>!q.d&&q.n>=0)){S.q=[];log("빽도: 되돌릴 말이 없어 넘어갑니다")}
 if(S.q.length&&!p.p.some(q=>!q.d&&q.n>=0)){const i=S.q.findIndex(r=>r!=6);if(i>=0)S.sel=i}
 if(S.tl>0)S.ph="throw";else if(S.q.length)S.ph="move";else return endTurn(S.cur);ui();if(!isH(S.cur))ai()}
-async function thr(i){const g=G;S.busy=1;const r=roll(i),p=S.pc[i];S.q.push(r);S.tl--;const gend=r==5&&p.gb&&has(i,"golden");if(r==4||r==5){let b=1+(has(i,"golden")?1:0);if(r==5&&has(i,"gamble")){b=p.gm?0:1;p.gm=1}S.tl+=b}if((r==4||r==5)&&has(i,"golden"))p.gb=1;
-let pb=null;if(p.pred){if(p.pred==r){S.tl++;pb=`${nmOf(i)}이(가) 예측을 맞혔습니다! (${N[r]})`;log(`${nmOf(i)}: 예측 성공! 던질 기회 +1`)}else log(`${nmOf(i)}: 예측 실패 (예측 ${N[p.pred]} → 결과 ${N[r]})`);p.pred=0}
-bcast({t:"show",r});await show(r);if(pb)banner(pb);log(nmOf(i)+": "+N[r]);if(gend){S.q=[];S.tl=0;log(`${nmOf(i)}: 황금 윷의 대가! 추가 던지기에서 모가 나와 차례가 즉시 끝납니다`);banner(`${nmOf(i)}: 황금 윷의 대가! 차례 종료`)}await sl(450);if(g!=G)return;S.busy=0;next()}
+async function thr(i){const g=G;S.busy=1;const pf=S.pc[i].forceDo,r=roll(i),p=S.pc[i];S.q.push(r);S.tl--;const gend=r==5&&p.gb&&has(i,"golden");if(r==4||r==5){let b=1+(has(i,"golden")?1:0);if(r==5&&has(i,"gamble")){b=p.gm?0:1;p.gm=1}S.tl+=b}if((r==4||r==5)&&has(i,"golden"))p.gb=1;
+let pb=null;if(p.pred){if(p.pred==r){S.tl++;pb=`${nmOf(i)}이(가) 예측을 맞혔습니다! (${N[r]})`;log(`${nmOf(i)}: 예측 성공! 던질 기회 +1`)}else{log(`${nmOf(i)}: 예측 실패 (예측 ${N[p.pred]} → 결과 ${N[r]})`);pb=`${nmOf(i)}: 예측 실패 (예측 ${N[p.pred]} → 결과 ${N[r]})`}p.pred=0}
+const px=[];if(pf)px.push(`🎉 파티 효과로 ${nmOf(i)}의 윷이 '도'가 되었습니다`);if((r==4||r==5)&&has(i,"golden")&&!gend)px.push(`🌕 ${nmOf(i)}: 황금 윷! 던질 기회 +1 추가`);if(r==5&&has(i,"gamble")&&p.gm==1&&!pf)px.push(`🎰 ${nmOf(i)}: 도박꾼! '모'가 나왔습니다`);if(pb)px.unshift(pb);
+bcast({t:"show",r});await show(r);if(px.length)banner(px.join(" / "));log(nmOf(i)+": "+N[r]);if(gend){S.q=[];S.tl=0;log(`${nmOf(i)}: 황금 윷의 대가! 추가 던지기에서 모가 나와 차례가 즉시 끝납니다`);banner(`${nmOf(i)}: 황금 윷의 대가! 차례 종료`)}await sl(450);if(g!=G)return;S.busy=0;next()}
 async function walk(i,k,r,sc,g){const pc=S.pc[i].p[k],gr=grp(i,k);let stops;
 if(r==6){const b=pc.n>=0&&!bkFin(pc)&&pc.h&&pc.h.length?bkDest(i,pc):null;stops=[{n:b?(b.stay?pc.n:(b.n>=0?b.n:0)):0}]}
 else{stops=route(pc,stp(i,r),sc);const d0=dest(pc,stp(i,r),sc);if(d0&&S.peace)stops=stops.concat(peaceAdj(i,d0).more)}
 let from=pc.n<0?P[0]:P[pc.n];S.anim={qs:gr,i,x:from[0],y:from[1]};ui();snapNow();
 for(let j=0;j<stops.length;j++){sfx("step",r==6?-3:j);const to=P[stops[j].n];bcast({t:"hop",f:from,to});await tw(from,to,250);if(g!=G)return;from=to}
 S.anim=null}
-async function go(i,k,sc){const g=G;S.busy=1;const r=S.q.splice(Math.min(S.sel||0,S.q.length-1),1)[0];S.sel=0;S.mv++;await walk(i,k,r,sc,g);if(g!=G)return;const x=mv(i,k,r,sc);ui();
-if(x.cap>0){sfx("cap");$("#bd").classList.remove("sk");void $("#bd").offsetWidth;$("#bd").classList.add("sk");S.tl+=1+(has(i,"chaser")?1:0);log(nmOf(i)+"의 말 잡기! 추가 던지기");if(r==1&&has(i,"accel")){consume(i,"accel");S.tl++;log(`${nmOf(i)}: 가속! 던질 기회 +1`);banner(`⚡ ${nmOf(i)}: 가속! 던질 기회 +1`)}}
+async function go(i,k,sc){const g=G;S.busy=1;const r=S.q.splice(Math.min(S.sel||0,S.q.length-1),1)[0];S.sel=0;S.mv++;await walk(i,k,r,sc,g);if(g!=G)return;const x=mv(i,k,r,sc);ui();if(r==1&&has(i,"leap"))banner(`🦘 ${nmOf(i)}: 도약! '도'로 1칸 더 이동합니다`);
+if(x.cap>0){sfx("cap");$("#bd").classList.remove("sk");void $("#bd").offsetWidth;$("#bd").classList.add("sk");S.tl+=1+(has(i,"chaser")?1:0);log(nmOf(i)+"의 말 잡기! 추가 던지기");{const cn=[];if(has(i,"chaser"))cn.push(`🏹 ${nmOf(i)}: 추격자! 던질 기회 +1 추가`);if(has(i,"slayer")&&S.pc[i].kills<5)cn.push(`☠️ 학살자 ${S.pc[i].kills}/5`);if(cn.length)banner(cn.join(" / "))}if(r==1&&has(i,"accel")){consume(i,"accel");S.tl++;log(`${nmOf(i)}: 가속! 던질 기회 +1`);banner(`⚡ ${nmOf(i)}: 가속! 던질 기회 +1`)}}
 if(x.goal){sfx("goal");log(nmOf(i)+"의 말이 완주했습니다")}else evAfter(i,k);
 await sl(450);if(g!=G)return;hop=-9;S.busy=0;
 const w=checkWin(i);if(w)return endGame(w.win,w);
@@ -614,10 +619,10 @@ reap:{n:"사신",ic:"💀",c:"#c79bff",d:"다음 턴 시작 시 도착 지점에
 fog:{n:"안개",ic:"☁️",c:"#c8d3dc",d:"2턴 동안 안개가 맵을 덮어 내 말 근처만 보입니다. 상대 말이 어디 있는지 알 수 없습니다"},
 harv:{n:"풍년",ic:"🍞",c:"#ffd27a",d:"무작위 칸에 빵이 떨어집니다. 먼저 먹은 사람은 '걸'을 얻습니다"}};
 const EVS=[6,10,14];
-const USEN={mine:["💥","매복지뢰를 설치했습니다! (위치는 비밀)"],luck:["🍀","행운을 사용했습니다! '모' 1개 획득"],bomber:["💣","자폭병을 사용했습니다!"],raid:["🗡️","기습을 사용했습니다! '빽도' 획득"],chance:["🎲","기회를 사용했습니다! 윷을 한 번 더 던집니다"],behead:["🪓","참수를 사용했습니다! 무작위 플레이어의 말이 모두 사라집니다"],block:["🚧","봉쇄를 사용했습니다! 이번 한 턴 지름길을 쓸 수 없습니다"],short:["🏃","지름길을 사용했습니다!"],warp:["🌀","워프게이트를 설치했습니다!"],jail:["⛓️","감옥을 사용했습니다!"],bomb:["💣","폭탄을 설치했습니다!"],rule:["🔗","규칙 위반을 사용했습니다! 두 말이 연결됩니다"],mon:["👾","괴물을 풀었습니다!"],hypno:["🌀","최면을 사용했습니다! 상대 말이 이동합니다"],dd:["☠️","죽음의 대가를 사용했습니다! '모' 획득"],swap:["🔄","위치변환을 사용했습니다! 말의 위치를 맞바꿉니다"],yutt:["🎯","윷던지기를 사용했습니다! 상대가 2차례 쉬고 '윷'을 얻습니다"]};
+const USEN={chaos:["🌪️","대격변을 사용했습니다! 모든 말의 위치가 뒤섞였습니다"],party:["🎉","파티를 사용했습니다! 다른 플레이어의 다음 윷이 '도'가 됩니다"],predict:["🔮","미래 예측을 사용했습니다! 다음 윷을 예측합니다"],mine:["💥","매복지뢰를 설치했습니다! (위치는 비밀)"],luck:["🍀","행운을 사용했습니다! '모' 1개 획득"],bomber:["💣","자폭병을 사용했습니다!"],raid:["🗡️","기습을 사용했습니다! '빽도' 획득"],chance:["🎲","기회를 사용했습니다! 윷을 한 번 더 던집니다"],behead:["🪓","참수를 사용했습니다! 무작위 플레이어의 말이 모두 사라집니다"],block:["🚧","봉쇄를 사용했습니다! 이번 한 턴 지름길을 쓸 수 없습니다"],short:["🏃","지름길을 사용했습니다!"],warp:["🌀","워프게이트를 설치했습니다!"],jail:["⛓️","감옥을 사용했습니다!"],bomb:["💣","폭탄을 설치했습니다!"],rule:["🔗","규칙 위반을 사용했습니다! 두 말이 연결됩니다"],mon:["👾","괴물을 풀었습니다!"],hypno:["🌀","최면을 사용했습니다! 상대 말이 이동합니다"],dd:["☠️","죽음의 대가를 사용했습니다! '모' 획득"],swap:["🔄","위치변환을 사용했습니다! 말의 위치를 맞바꿉니다"],yutt:["🎯","윷던지기를 사용했습니다! 상대가 2차례 쉬고 '윷'을 얻습니다"]};
 const PASSN={dance:"💃 라스트 댄스! 던질 기회 +2 (완주 못 하면 필드 위 말이 사라집니다)",loan:"💳 대출! 던질 기회 +1, 다음 차례는 쉽니다",save:"🏦 적금! 던질 기회 +2, 다음 차례는 쉽니다",interest:"📈 이자! 던질 기회 +2"};
 const iga=n=>{const c=n.charCodeAt(n.length-1);return n+(c>=0xAC00&&c<=0xD7A3?((c-0xAC00)%28?"이":"가"):"이(가)")};
-const useNote=(i,k)=>{const t=USEN[k];if(t)banner(`${t[0]} ${iga(nmOf(i))} ${t[1]}`)};
+const useNote=(i,k)=>{const t=USEN[k];if(t)banner(`${t[0]} ${iga(nmOf(i))} ${t[1]}${S.un||""}`);S.un=""};
 let POPS=[];
 function evLines(){const L=M.L,cor=[0,...M.big.filter(n=>n<L)].sort((a,b)=>a-b),out=[];
 for(let i=0;i<cor.length;i++){const a=cor[i],b=i+1<cor.length?cor[i+1]:L,s=[];for(let n=a+1;n<b;n++)s.push(n);if(s.length)out.push(s)}
@@ -757,7 +762,7 @@ try{if(window.claude&&claude.use)claude.use("room").then(r=>{RM=r;netHint()}).ca
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const view=v=>["lobby","room","gm"].forEach(k=>{$("#"+k).hidden=k!=v});
 const say=t=>{$("#lmsg").textContent=t||""};
-const BUILD="빌드 1117-a";
+const BUILD="빌드 1117-d";
 function netHint(){const e=$("#nhint");if(e)e.textContent=BUILD+" · "+!RM&&window.Peer?"방 코드를 친구에게 알려주면 다른 기기(PC·휴대폰)에서도 함께 할 수 있어요.":RM?"다른 컴퓨터와도 방 코드로 함께 할 수 있어요. 같이 할 사람은 이 페이지에 '기여자' 이상 권한으로 초대되어 있어야 합니다.":"이 화면에서는 온라인 연결을 쓸 수 없어, 같은 브라우저의 다른 탭끼리만 시험할 수 있습니다."}
 netHint();
 function send(m){m=Object.assign({from:ID,room:R?R.code:pend},m);try{if(NET.rm)NET.rm.emit("y",m).catch(e=>{if(e&&e.code=="not_permitted")say("이 계정은 방에 메시지를 보낼 권한이 없습니다. 페이지 소유자에게 '기여자' 이상 권한을 요청하세요.")});else if(NET.pp){if(role=="host")NET.conns.forEach(c=>{try{if(c.open)c.send(m)}catch(e){}});else if(NET.gc&&NET.gc.open)NET.gc.send(m)}else if(bc)bc.postMessage(m)}catch(e){}}
