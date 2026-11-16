@@ -240,6 +240,7 @@ body.tpon{padding-bottom:36vh}
 #evfx .fogw{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(215,225,235,.55),rgba(200,212,224,.92));animation:dkf 2.6s ease-in-out forwards;opacity:0}
 .mist{animation:mdr 9s ease-in-out infinite alternate}.m2{animation-duration:12s;animation-direction:alternate-reverse}.m3{animation-duration:15s}@keyframes mdr{to{transform:translateX(60px)}}
 </style></head><body>
+<button id="fsb" class="o" aria-label="전체화면" title="전체화면"><svg viewBox="0 0 24 24" id="fsi" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
 <main id="lobby"><div class="hero"><svg class="logo" viewBox="0 0 132 84" aria-hidden="true"><defs><radialGradient id="lR" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ff9aa2"/><stop offset=".45" stop-color="#d9414f"/><stop offset="1" stop-color="#5e0f1c"/></radialGradient><radialGradient id="lB" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#9cd0ff"/><stop offset=".45" stop-color="#3b86d9"/><stop offset="1" stop-color="#0f2f63"/></radialGradient><filter id="lS" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2"/></filter></defs><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M26 62V22H106V62Z" stroke="#04070c" stroke-width="15"/><path d="M26 62V22H106V62Z" stroke="#101a29" stroke-width="10"/><path d="M26 62V22H106V62Z" stroke="#d6b165" stroke-opacity=".5" stroke-width="1.2" stroke-dasharray="1 7"/></g><ellipse cx="28" cy="35" rx="12" ry="3.6" fill="#000" opacity=".55" filter="url(#lS)"/><circle cx="26" cy="22" r="11" fill="url(#lR)"/><ellipse cx="22.5" cy="17.5" rx="4" ry="2.4" fill="#fff" opacity=".4"/><ellipse cx="108" cy="75" rx="12" ry="3.6" fill="#000" opacity=".55" filter="url(#lS)"/><circle cx="106" cy="62" r="11" fill="url(#lB)"/><ellipse cx="102.5" cy="57.5" rx="4" ry="2.4" fill="#fff" opacity=".4"/></svg><h1>증강 윷놀이</h1><p class="sub">증강을 고르고, 윷을 던지고, 상대 말을 잡아라</p></div>
 <div class="pn"><label class="f" for="nick">닉네임</label><input id="nick" maxlength="10" placeholder="닉네임 (최대 10자)" autocomplete="off">
 <div class="lob"><button id="bMake">방 만들기</button><button id="bJoin" class="o">방 참여하기</button>
@@ -256,7 +257,6 @@ body.tpon{padding-bottom:36vh}
 <main id="gm" hidden>
 <div id="rot" role="note"><span>📱 휴대폰을 가로로 돌리면 한 화면에 모두 보여요</span><button class="o" id="rotx">닫기</button></div>
 <div id="tdv" hidden><div class="tph"><b>테스트 도구</b><button class="o sm" id="tpx">접기</button></div><div class="tps">다음 윷 고정</div><div class="tpr" id="tpf"></div><div class="tps">대상</div><div class="tpr" id="tpt"></div><div class="tps">이벤트 발동 (테스트)</div><div class="tpr" id="tpe"></div><div class="tps">증강 부여/제거 (누르면 토글)</div><div id="tpl"></div></div><button id="tpo" class="o sm" hidden>테스트 도구</button>
-<button id="fsb" class="o" aria-label="전체화면" title="전체화면"><svg viewBox="0 0 24 24" id="fsi" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
 <header class="hd"><h1>증강 윷놀이</h1><div class="tn" id="tn"></div><div class="mn"><button id="bk" class="o sm">로비로</button><button class="o sm bset">설정</button></div></header>
 <div id="evh" hidden role="status"></div>
 <div class="gr">
@@ -806,7 +806,7 @@ try{if(window.claude&&claude.use)claude.use("room").then(r=>{RM=r;netHint()}).ca
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const view=v=>["lobby","room","gm"].forEach(k=>{$("#"+k).hidden=k!=v});
 const say=t=>{$("#lmsg").textContent=t||""};
-const BUILD="빌드 1118-b";
+const BUILD="빌드 1118-c";
 (function(){const el=document.documentElement,fsb=$("#fsb"),ic=$("#fsi");
 const on=()=>document.fullscreenElement||document.webkitFullscreenElement;
 const draw=()=>{ic.innerHTML=on()?'<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>':'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';fsb.setAttribute("aria-label",on()?"전체화면 종료":"전체화면");fsb.title=fsb.getAttribute("aria-label")};
